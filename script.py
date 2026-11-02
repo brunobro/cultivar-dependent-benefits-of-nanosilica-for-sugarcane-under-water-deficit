@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Plant cane (2025) and ratoon cane (2026): multivariate Fuzzy performance score
-(PCA + zero-order Takagi-Sugeno FIS + PSO)  --  VERSION 3 (revised, English)
+(PCA + zero-order Takagi-Sugeno FIS + PSO)  --  VERSION 3
 
 Usage:
-    python sugarcane_fuzzy_v3.py [path/to/dataset.xlsx]
+    python script.py [path/to/dataset.xlsx]
 Optional environment variables:
     FUZZY_DATA    dataset path                    (default: dataset.xlsx)
     FUZZY_OUT     output folder                   (default: fuzzy_results)
