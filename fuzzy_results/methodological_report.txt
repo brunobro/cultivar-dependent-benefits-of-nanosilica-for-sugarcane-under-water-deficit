@@ -1,0 +1,168 @@
+Mode: FULL | dataset: dataset.xlsx
+[QA] RWC in 2025 was stored as a fraction; converted to % (x100).
+
+=== DATA QA ===
+ Season         Identity  n_violations  max_abs_deviation
+   2025  PFM = SFM + LFM             0                0.0
+   2025  PDM = SDM + LDM             0                0.0
+   2025 TPH = TCH*PC/100             0                0.0
+   2026  PFM = SFM + LFM             0                0.0
+   2026  PDM = SDM + LDM             0                0.0
+   2026 TPH = TCH*PC/100             0                0.0
+  [WARNING] 2026: plots with identical mass blocks: T7B2,T7B4
+  [WARNING] 2 group x variable combinations have ZERO variance (possible rounding/imputation) -> see sheet QA_zero_variance.
+  [WARNING] ratio of means between seasons outside [0.1; 10]: FS (within-season z-scoring neutralises this, but confirm unit/method.)
+
+Variables in the PCA (main analysis): 21 (excluded as derived: ['TPH', 'PFM', 'PDM'])
+n/p ratio per season = 32/21 = 1.52  (low: unstable covariance estimates; see loading stability)
+
+=== PCA: CHOICE OF K ===
+Variance explained by PCA1-PCA3: 27.3%, 19.0%, 8.4% | cumulative = 54.7%  (45.3% discarded)
+Kaiser criterion: 6 PCs | Horn's parallel analysis (p95): 2 PCs  -> K=3 is a parsimony choice for the FIS (3^K rules), not a statistical criterion.
+  [WARNING] PCA3: |r| with Z_vigor = 0.06 < 0.30 -> 'higher = better' polarity has no semantic basis.
+Component  var_explained_pct  eigenvalue  parallel_analysis_threshold  corr_with_Z_vigor  weak_polarity  R2_Treatment_pct  R2_Cultivar_pct
+     PCA1             27.305       5.643                        2.415             -0.796          False            63.462            0.219
+     PCA2             19.021       3.931                        2.100             -0.466          False             7.658            5.623
+     PCA3              8.409       1.738                        1.915              0.058           True            17.376            0.377
+
+=== COVARIANCE STRUCTURE BETWEEN SEASONS (supports or undermines pooling) ===
+Correlation between the 2025 and 2026 correlation matrices (upper triangle): r = 0.347
+Tucker congruence |phi| between 2025 PCs (rows) and 2026 PCs (columns):
+           PCA1-2026  PCA2-2026  PCA3-2026
+PCA1-2025       0.39       0.61       0.26
+PCA2-2025       0.65       0.20       0.04
+PCA3-2025       0.15       0.10       0.58
+Loading stability (block bootstrap, mean congruence with the full-sample loadings): PCA1=0.97, PCA2=0.96, PCA3=0.76
+
+=== PSO: STABILITY AND RULE SUPPORT (fit on all data) ===
+6 independent runs | J: min=0.0119, median=0.0125, max=0.0132 | mean/min Spearman between run scores = 0.990/0.985
+Rules with effective n < 1 observation (no support; consequent ~ ridge prior): 7 of 27
+
+=== LEAVE-ONE-BLOCK-OUT CROSS-VALIDATION (inference uses OOF scores only) ===
+Adjusted R2 of the 16 groups (Season x Cultivar x Treatment): in-sample vs out-of-sample
+             Index  adjR2_in_sample  adjR2_OOF  Spearman_OOF_with_FIS
+         FIS (PSO)            0.889      0.674                  1.000
+              PCA1            0.811      0.708                  0.807
+   Vigour (mean z)            0.685      0.620                  0.826
+Weighted PCA index            0.798      0.698                  0.962
+-> FIS optimism (in-sample - OOF) = 0.215. The FIS does NOT outperform the best simple index out of sample.
+Dependence between seasons (same plots): Spearman OOF S 2025 x 2026 = 0.389 (p=0.028) -> seasons are NOT independent; inference is done per season.
+
+Label-permutation test: optimised SS_within/SS_total = 0.087 (true labels) vs 0.306 +- 0.089 (shuffled labels, n=20); p = 0.048
+
+=== SENSITIVITY (OOF adjusted R2 of the 16 groups) ===
+                         Configuration  n_vars  K  adjR2_OOF_FIS  adjR2_OOF_PCA1  adjR2_OOF_Vigour (mean z)  adjR2_OOF_Weighted PCA index
+Main (K=3, derived variables excluded)      21  3          0.674           0.708                       0.62                         0.698
+                         K=2 (9 rules)      21  2          0.690           0.708                       0.62                         0.714
+                      All 24 variables      24  3          0.744           0.766                       0.62                         0.729
+                Without mass variables      17  3          0.618           0.504                       0.62                         0.621
+
+=== INFERENCE PER SEASON (factorial PERMANOVA, blocks as strata; OOF scores) ===
+
+Season 2025 - multivariate PERMANOVA (21 z-scored variables):
+                    Term  df       SS    R2_%  Pseudo-F      p  p_Holm
+                Cultivar   1  33.5957  5.1606    2.4925 0.0035  0.0175
+                   Water   1 104.7812 16.0954    7.7738 0.0001  0.0007
+                     nSi   1  82.3100 12.6436    6.1067 0.0001  0.0007
+        Cultivar x Water   1  24.5307  3.7682    1.8200 0.0448  0.1344
+          Cultivar x nSi   1  13.4858  2.0716    1.0005 0.4497  0.6404
+             Water x nSi   1  27.2335  4.1833    2.0205 0.0241  0.0964
+  Cultivar x Water x nSi   1  15.3177  2.3529    1.1364 0.3202  0.6404
+Treatment (global, 7 df)   7 301.2546 46.2757    3.1929 0.0001     NaN
+Season 2025 - permutation ANOVA on S_Fuzzy (OOF):
+                    Term  df        SS    R2_%  Pseudo-F      p  p_Holm
+                Cultivar   1  417.7453  4.5374    3.9365 0.0635  0.3175
+                   Water   1 3555.9769 38.6234   33.5084 0.0001  0.0007
+                     nSi   1 1375.7531 14.9428   12.9639 0.0020  0.0120
+        Cultivar x Water   1  201.3528  2.1870    1.8974 0.1809  0.7236
+          Cultivar x nSi   1   62.4780  0.6786    0.5887 0.4437  0.8874
+             Water x nSi   1  179.5595  1.9503    1.6920 0.2118  0.7236
+  Cultivar x Water x nSi   1    0.6375  0.0069    0.0060 0.9353  0.9353
+Treatment (global, 7 df)   7 5793.5030 62.9263    7.7990 0.0007     NaN
+PERMDISP (homogeneity of dispersion, 8 groups): multivariate p=0.3790 | S_Fuzzy p=0.0072  [WARNING: heterogeneous dispersion; interpret PERMANOVA with caution]
+
+Season 2026 - multivariate PERMANOVA (21 z-scored variables):
+                    Term  df       SS    R2_%  Pseudo-F      p  p_Holm
+                Cultivar   1  81.8721 12.5764   11.7382 0.0001  0.0007
+                   Water   1 127.7915 19.6300   18.3218 0.0001  0.0007
+                     nSi   1 115.7206 17.7758   16.5912 0.0001  0.0007
+        Cultivar x Water   1  23.1985  3.5635    3.3260 0.0128  0.0128
+          Cultivar x nSi   1  58.2771  8.9519    8.3553 0.0001  0.0007
+             Water x nSi   1  33.9022  5.2077    4.8606 0.0001  0.0007
+  Cultivar x Water x nSi   1  42.0956  6.4663    6.0354 0.0001  0.0007
+Treatment (global, 7 df)   7 482.8576 74.1717    9.8898 0.0001     NaN
+Season 2026 - permutation ANOVA on S_Fuzzy (OOF):
+                    Term  df        SS    R2_%  Pseudo-F      p  p_Holm
+                Cultivar   1 2928.7288 27.5046   41.4167 0.0001  0.0007
+                   Water   1 1077.7601 10.1216   15.2412 0.0005  0.0025
+                     nSi   1 3186.8541 29.9288   45.0670 0.0001  0.0007
+        Cultivar x Water   1    2.2078  0.0207    0.0312 0.8676  0.8676
+          Cultivar x nSi   1 1196.0013 11.2320   16.9133 0.0006  0.0025
+             Water x nSi   1  604.0507  5.6728    8.5422 0.0051  0.0153
+  Cultivar x Water x nSi   1  139.1152  1.3065    1.9673 0.1813  0.3626
+Treatment (global, 7 df)   7 9134.7180 85.7870   18.4541 0.0001     NaN
+PERMDISP (homogeneity of dispersion, 8 groups): multivariate p=0.2994 | S_Fuzzy p=0.0441  [WARNING: heterogeneous dispersion; interpret PERMANOVA with caution]
+
+=== MULTIPLE COMPARISONS (Holm) ===
+Smallest attainable exact two-sided p for Mann-Whitney with n=4 vs 4 = 0.0286 (after Holm with 4 comparisons: 0.114) -> very low power; prioritise the factorial PERMANOVA.
+ Season     Treatment  exact_p  p_Holm
+   2025 Control - nSi   0.1143  0.4571
+   2025  Stress - nSi   0.6857  1.0000
+   2025 Control + nSi   0.8857  1.0000
+   2025  Stress + nSi   0.8857  1.0000
+   2026 Control - nSi   0.0571  0.1143
+   2026  Stress - nSi   0.4857  0.4857
+   2026 Control + nSi   0.0286  0.1143
+   2026  Stress + nSi   0.0286  0.1143
+
+=== IEF AND NET nSi GAIN (paired by block; OOF scores) ===
+Original IEF = stress/control x 100. For the score (no true zero) the ratio is not interpretable on a ratio scale;
+the valid reading is the difference-in-differences (Delta_diff_in_diff, points) and the Water x nSi term of the permutation ANOVA.
+IEF on TCH/TPH (ratio scale) is the analogue of Fernandez's index. 95% CI by t (df=3); exact sign-flip test (smallest possible p = 0.125).
+ Season Cultivar Variable ratio_scale  IEF_minus_nSi  IEF_plus_nSi  Delta_nSi_pp     SD  CI95_low  CI95_high  p_signflip  Delta_diff_in_diff
+   2025 RB027040  S_Fuzzy  no (score)         60.893        81.838        20.945 11.530     2.598     39.292       0.125               8.911
+   2025 RB027040      TCH         yes         78.738        83.407         4.669  2.780     0.246      9.092       0.125               8.889
+   2025 RB027040      TPH         yes         71.214        81.425        10.211  5.677     1.177     19.245       0.125               3.640
+   2025 RB867515  S_Fuzzy  no (score)         54.097        71.160        17.063 11.416    -1.103     35.229       0.125              10.040
+   2025 RB867515      TCH         yes         95.767        78.361       -17.406  5.916   -26.820     -7.992       0.125             -48.333
+   2025 RB867515      TPH         yes         90.846        72.983       -17.862 13.596   -39.497      3.772       0.250              -7.035
+   2026 RB027040  S_Fuzzy  no (score)         59.229       102.278        43.049 33.963   -10.994     97.092       0.125              25.719
+   2026 RB027040      TCH         yes         74.818       125.000        50.182 42.655   -17.691    118.055       0.250             138.889
+   2026 RB027040      TPH         yes         73.643       127.157        53.514 39.741    -9.723    116.751       0.250              21.384
+   2026 RB867515  S_Fuzzy  no (score)         65.432        85.184        19.752  8.545     6.155     33.350       0.125               9.039
+   2026 RB867515      TCH         yes         69.231       107.143        37.912 26.799    -4.731     80.555       0.250             103.333
+   2026 RB867515      TPH         yes         70.820       116.723        45.903 27.112     2.761     89.044       0.125              16.893
+
+=== PLANT CANE vs RATOON: raw variables (paired Wilcoxon by plot, Holm) ===
+Variable  median_2025  median_2026  median_diff_2026_minus_2025  p_paired_Wilcoxon  p_Holm
+     TCH     210.0000     268.8889                      31.1111             0.0115  0.0344
+     TPH      27.8621      38.2824                       6.8923             0.0041  0.0248
+      PC      13.2295      14.3748                       1.0582             0.0069  0.0276
+     TRS     135.1972     142.6890                       7.1061             0.0125  0.0344
+      Fi      12.7625      15.3066                       2.5194             0.0000  0.0000
+      Pu      80.2386      84.0322                       3.5626             0.0044  0.0248
+      NT      14.0000      13.5000                       0.0000             0.1821  0.1821
+      SL      91.0000      70.0000                     -22.8333             0.0000  0.0000
+      SD      26.7150      21.8250                      -5.1950             0.0000  0.0000
+(S_Fuzzy is NOT comparable between seasons: within-season z-scoring removes the season effect.)
+
+=== SCORES BY TREATMENT ===
+ Season Cultivar     Treatment  S_OOF_mean  S_OOF_sd  S_insample_mean
+   2025 RB027040 Control + nSi       63.93     20.74            58.66
+   2025 RB027040 Control - nSi       52.48      8.40            49.79
+   2025 RB027040  Stress + nSi       52.32      9.10            50.70
+   2025 RB027040  Stress - nSi       31.95      5.88            25.40
+   2025 RB867515 Control + nSi       73.09      7.94            74.39
+   2025 RB867515 Control - nSi       67.80     16.45            61.83
+   2025 RB867515  Stress + nSi       52.01     10.30            44.71
+   2025 RB867515  Stress - nSi       36.68      8.94            33.89
+   2026 RB027040 Control + nSi       78.05     10.12            79.66
+   2026 RB027040 Control - nSi       58.72      3.26            53.85
+   2026 RB027040  Stress + nSi       79.83      6.41            70.02
+   2026 RB027040  Stress - nSi       34.78     15.87            34.38
+   2026 RB867515 Control + nSi       51.38      6.67            47.60
+   2026 RB867515 Control - nSi       48.17      5.53            45.33
+   2026 RB867515  Stress + nSi       43.77      1.60            42.51
+   2026 RB867515  Stress - nSi       31.52      4.57            25.32
+
+Total time: 351 s | outputs in: C:\Users\bruno\OneDrive\_PARCERIA_BRUNO_FRANCISCO\Cana_Planta_Soca\script\fuzzy_results
